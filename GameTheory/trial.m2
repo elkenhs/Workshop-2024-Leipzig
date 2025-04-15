@@ -3,18 +3,18 @@ newPackage(
    Version => "0.1",
    Date => "April, 2025",
    Authors => {
-      {Name => "Irem Portakal",
-         Email => "mail@irem-portakal.de",
-         HomePage => "https://www.irem-portakal.de"},
       {Name => "Lars Kastner",
          Email => "kastner@math.tu-berlin.de",
          HomePage => "https://lkastner.github.io"},
-      {Name => "Erin Connelly",
-         Email => "erin.connelly@uni-osnabrueck.de",
-         HomePage => "https://erinconnelly96.github.io/"},
-      {Name => "Hannah Tillmann-Morris",
-         Email => "tillmann@mis.mpg.de",
-         HomePage => "https://sites.google.com/view/hannah-tillmann-morris"},,
+      {Name => "Elke Neuhaus",
+         Email => "elke.neuhaus@mis.mpg.de",
+         HomePage => "https://sites.google.com/view/elkeneuhaus"},
+      {Name => "Irem Portakal",
+         Email => "mail@irem-portakal.de",
+         HomePage => "https://www.irem-portakal.de"},
+      {Name => "",
+         Email => "",
+         HomePage => ""},,
       {Name => "",
          Email => "",
          HomePage => ""},,
@@ -269,12 +269,9 @@ correlatedEquilibria List := X -> (
 
 
 
-
-
 --***************************************--
 --  Methods for dependency equlilibria   --
 --***************************************--
-
 
 
 -- ProbabilityRing = new Type of Ring
@@ -290,31 +287,6 @@ probabilityRing List := Ring => opts -> Di -> (
     P := zeroTensor(R, Di);
     for j in J do P#j = (p_j)_R;
     R#"probabilityVariable" = P;
-
-    R#"gameFormat" = Di;
-    R)
-
--- PayoffProbabilityRing = new Type of ProbabilityRing
-
-payoffProbabilityRing = method(Options => { CoefficientRing => QQ, ProbabilityVariableName => "p", PayoffVariableName => "x" })
-payoffProbabilityRing List := Ring => opts -> Di -> (
-    J := enumerateTensorIndices Di;
-    p := getSymbol opts.ProbabilityVariableName;
-    x := getSymbol opts.PayoffVariableName;
-    K := opts.CoefficientRing;
-
-    L := toList(0 .. (#Di - 1));
-    E := L ** J;
-    R := K[apply(E, e -> x_e), apply(J, j -> p_j)];
-
-    P := zeroTensor(R, Di);
-    for j in J do P#j = (p_j)_R;
-    R#"probabilityVariable" = P;
-
-    X := apply(#Di, i -> zeroTensor(R, Di));
-    for i to #Di-1 do
-        for j in J do X_i#j = x_(i, j)_R;
-    R#"payoffVariable" = X;
 
     R#"gameFormat" = Di;
     R)
@@ -665,414 +637,255 @@ doc ///
 ///
 
 
-----------------------------------------
--- Documentation toMarkovRing         --
-----------------------------------------
+-----------------------------------
+-- Documentation probabilityRing --
+-----------------------------------
 
 doc ///
-Key
- toMarkovRing
- (toMarkovRing, Ring)
-Headline
- ring of joint probability distributions created with the markovRing function from the GraphicalModels package
-Usage
- toMarkovRing R
-Inputs
- R:PolynomialRing
- created using the probabilityRing method
-Outputs
- :PolynomialRing
- a polynomial ring isomorphic to the input ring created by the markovRing method from the GraphicalModels pacakge,
- with variables $q_{(i_1+1, \dots , i_k+1)}$ corresponding to the variables $p_{\{i_1, \ldots, i_k\}}$
- of the input ring
-Description
-Text
- Given a ring created with the probabilityRing function, this function creates the canonically isomorphic ring
- defined by the markovRing function from the GraphicalModels package.
- The variable name of the output ring is set to be different from the variable name of the input ring:
- the default variable name of the output ring is "p",
- and if the variable name of the input ring is "p" then the variable name of the output ring becomes "q".
+    Key
+        probabilityRing
+        (probabilityRing, List)
+    Headline
+        Ring of probability distributions of a game indexed by ordered multi-indices
+    Usage
+        probabilityRing(Di)
+    Inputs
+        Di:List
+           a list of natural numbers $d_0,\dots,d_{n-1}$
+    -- Optional inputs
+    --     CoefficientRing => ..., default value QQ, optional input to choose the base field
+    --     ProbabilityVariableName => ..., default value "p", symbol used for the tensor of probability variables
+    Outputs
+        :Ring  
+         a polynomial ring with a tensor of variables $p_{i_0,\dots,i_{n-1}}$
+         such that $i_j$ runs from $0$ to $d_j-1$.
+    Description
+        Text
+            The list $Di$ represents the format of the game.
+            In this example we create a ring of probability distributions coming from a
+            game with format {2, 3, 2}. This format can be accessed from the ring through
+            the field "gameFormat".
+            
+            The variables $p#i$ are the entries of the tensor $p$, which can be
+            accessed from the ring through the field "probabilityVariable".
 
-Example
- R = probabilityRing({2,3,4}, CoefficientRing => ZZ/32003, ProbabilityVariableName => "x")
- markovR = toMarkovRing R
- numgens markovR
- R_0, R_11, R_23
-
-SeeAlso
- probabilityRing
- gaussianRing
-
-///
-
-
---------------------------------------
--- Documentation mapToMarkovRing    --
---------------------------------------
-
-doc ///
-
-Key
- mapToMarkovRing
- (mapToMarkovRing, Ring)
-Headline
- ring isomorphism from the given probabilityRing to the corresponding markovRing
-Usage
- mapToMarkovRing R
-Inputs
- R:Ring
- must be a probabilityRing
-Outputs
- :RingMap
- the isomorphism identifying R with toMarkovRing(R).
- The variable $p_{\{i_1, \ldots, i_k\}}$ is sent to $q_{(i_1+1, \dots , i_k+1)}$.
- 
-Description
- Text
-  This function creates the RingMap from a given probabilityRing to its canonically isomorphic
-  markovRing.
- Example
-  R = probabilityRing {2,3,4}
-  markovR = toMarkovRing R
-  F = mapToMarkovRing R
-  target F
-  source F
-  isInjective F
-  F.matrix
-
-SeeAlso
- toMarkovRing
- mapToProbabilityRing
-
-///
-
--------------------------------------------
--- Documentation mapToProbabilityRing    --
--------------------------------------------
-
-doc ///
-Key
- mapToProbabilityRing
- (mapToProbabilityRing, Ring)
-Headline
- ring isomorphism to the given probabilityRing from the corresponding markovRing
-Usage
- mapToProbabilityRing R
-Inputs
- R:Ring
-   must be a probabilityRing
-Outputs
- :RingMap
- the isomorphism identifying R with toMarkovRing(R).
- The variable $q_{(i_1+1, \dots , i_k+1)}$ is sent to $p_{\{i_1, \ldots, i_k\}}$.
- 
-Description
- Text
-  This function creates the RingMap to a given probabilityRing from its canonically isomorphic
-  markovRing.
- Example
-  R = probabilityRing {2,3,4}
-  markovR = toMarkovRing R
-  F = mapToProbabilityRing R
-  target F
-  source F
-  isInjective F
-  F.matrix
-
-SeeAlso
- toMarkovRing
- mapToProbabilityRing
-
-///
-
---------------------------------
--- Documentation ciIdeal      --
---------------------------------
-
-doc ///
-Key
- ciIdeal
- (ciIdeal, Ring, List)
- (ciIdeal, Ring, Graph)
- (ciIdeal, Ring, List, List)
- (ciIdeal, Ring, Graph, List)
-Headline
- the ideal of a list of conditional independence statements
-Usage
- ciIdeal (R, Stmts)
- ciIdeal (R, G)
- ciIdeal (R, Stmts, PlayerNames)
- ciIdeal (R, G, PlayerNames)
-Inputs
- R:Ring
-   must be created using probabilityRing
- Stmts:List
-   the list of conditional independence statements 
- G:Graph
-   the graph modelling the conditional dependencies between players
- PlayerNames:List
-   the ordered list of players - the names of the random variables in the conditional independence
-   statements or vertices of the graph. If PlayerNames is omitted, the players
-   (or the vertices of G) are assumed to be labelled 1..n.
-Outputs
- :Ideal
- the ideal in R of conditional independence relations
-Description
- Text
-  {\tt ciIdeal} computes the ideal of a list of conditional independence statements.
-  The input can be the list of conditional independence statements itself,
-  or a graph modelling the conditional dependencies between players.
-
-  A single conditional independence statement is a list consisting of three disjoint
-  lists of indices for random variables, e.g. $\{ \{1,2\},\{4\}, \{3\} \}$
-  which represents the conditional independence statement ``$(X_1, X_2)$
-  is conditionally independent of $X_4$ given $X_3$''.
-  Given an undirected graph $G$, the conditional independence statements are produced via
-  the globalMarkov function from the GraphicalModels package. A global Markov statement
-  for $G$ is a list $\{A, B, C\}$ of three disjoint lists of vertices of $G$, where the
-  subset $C$ separates the subset $A$ from the subset $B$ in the graph $G$.  
-
-  The output is an ideal of the given ring PR, which must be created using the
-  probabilityRing function. This function computes the ideal using the
-  conditionalIndependenceIdeal function from the GraphicalModels package, then
-  maps it to an ideal of PR via the mapToProbabilityRing function.
-
- Example
-     FF = ZZ/32003
-     d = {2,3,2};
-     PR = probabilityRing (d, CoefficientRing => FF);
-     G = graph ({}, Singletons => {1,2,3});
-     I = ciIdeal (PR, G)
-
-    Text
-      Here is an example where the vertices of the graph need to be relabeled.
+        Example
+            Di = {2,1,2};
+            PR = probabilityRing Di;
+            numgens PR
+            pairs PR#"probabilityVariable"
       
-    Example  
-     FF = ZZ/32003
-     d = {2,3,2};
-     PR = probabilityRing (d, CoefficientRing => FF);
-     G = graph {{John,Matthew},{Matthew,Sarah}};
-     I = ciIdeal (PR, G, {John,Matthew,Sarah})
-     
-    Text
-      Here is an example where the conditional independence relations are given with a List.
-
-    Example
-      FF = ZZ/32003
-      d = {2,3,2};
-      PR = probabilityRing (d, CoefficientRing => FF);
-      G = graph {{1,2},{2,3}};
-      L = {{{1},{3},{2}}}
-      I1 = ciIdeal (PR,G)
-      I2 = ciIdeal (PR,L)
-      I1 == I2
+        Text 
+            The optional argument "CoefficientRing" allows to change the base field. If no choice is
+            specified, the base field is set to QQ. It is also possible to change the name of the
+            variable tensor through the optional argument "ProbabilityVariableName", which is set to
+            the string "p" by default.
  
-  SeeAlso
-    conditionalIndependenceIdeal 
-    mapToProbabilityRing
-    toMarkovRing
-    ciIdeal
-    globalMarkov
+        Example
+            PR2 = probabilityRing (Di, Coefficients=>RR, ProbabilityVariableName=>q);
+            coefficientRing PR2
+            pairs PR2#"probabilityVariable"
+      
+        -- Figure out all of the functions which require a probabilityRing
+        Text
+            -- The functions @TO spohnMatrices@, @TO spohnIdeal@, @TO konstanzMatrix@, ... require the ring to be created by this function
+            -- or in a similar manner.
 ///
 
-
---------------------------------------------
--- Documentation intersectWithCImodel     --
---------------------------------------------
+------------------------------
+-- Documentation randomGame --
+------------------------------
 
 doc ///
   Key
-    intersectWithCImodel
-    (intersectWithCImodel, Ideal, List)
-    (intersectWithCImodel, Ideal, List, List)
-    (intersectWithCImodel, Ideal, Graph)
-    (intersectWithCImodel, Ideal, Graph, List) 
+    randomGame
+    
   Headline
-    The ideal of the intersection of a given variety with the conditional independence model
+    constructs game of a given format with arbitrary payoffs
   Usage
-    intersectWithCImodel(V, Stmts)
-    intersectWithCImodel(V, Stmts, PlayerNames)
-    intersectWithCImodel(V, G)
-    intersectWithCImodel(V, G, PlayerNames)
+    randomGame(Di)
   Inputs
-    V:Ideal 
-      An ideal of a ring created with probabilityRing 
-    Stmts:List
-      the list of conditional independence statements 
-    G:Graph
-      the graph modelling the conditional dependencies between players
-    PlayerNames:List
-      the ordered list of players - the names of the random variables in the conditional independence
-      statements or vertices of the graph. If PlayerNames is omitted, the players
-      (or the vertices of G) are assumed to be labelled 1..n.    
+    Di:List 
+      with positive integer entries $d_1,\dots ,d_n$ describing the format of the game
+  --Optional inputs
+  --  CoefficientRing => ..., default value QQ, optional input to choose another ring of coefficients
   Outputs
-    :Ideal 
-       The ideal of the intersection of the given variety with the conditional independence model
-       determined by the conditional independence statements/graph. 
+    :List  
+      a list of n tensors of format $d_1 \times \dots \times d_n$ that are the payoff tensors of a random game
   Description
-    Text
-      {\tt intersectWithCImodel} calculates the ideal of the intersection of the given variety V with
-      the conditional independence model determined by a set of conditional probability statements or an undirected graph.
-      More precisely, the output is the ideal of the closure of the variety given by removing the components in
-      the coordinate hyperplanes from the intersection of the variety V and the conditional independence
-      model.
-
-      The input for the conditional independence model can be a set of conditional probability statements or
-      an undirected graph.
-      A single conditional independence statement is a list consisting of three disjoint
-      lists of indices for random variables, e.g. $\{ \{1,2\},\{4\}, \{3\} \}$
-      which represents the conditional independence statement ``$(X_1, X_2)$
-      is conditionally independent of $X_4$ given $X_3$''. In the context of game theory, the variable
-      $X_i$ represents the strategy of player $i$.
-
-      Given an undirected graph $G$, the conditional independence statements are produced via
-      the globalMarkov function from the GraphicalModels package. A global Markov statement
-      for $G$ is a list $\{A, B, C\}$ of three disjoint lists of vertices of $G$, where the
-      subset $C$ separates the subset $A$ from the subset $B$ in the graph $G$.
-    Example
-     FF = ZZ/32003
-     d = {2,2,2};
-     X = randomGame(d, CoefficientRing => FF);
-     PR = probabilityRing(d, CoefficientRing => FF);
-     V = spohnIdeal(PR, X);
-     G1 = graph ({}, Singletons => {1,2,3});
-     G2 = graph ({{1,2}}, Singletons => {3});
-     I1 = intersectWithCImodel(V, G1)
-     I2 = intersectWithCImodel(V, G2)
-
-    Text
-      Here is an example where the vertices of the graph need to be relabeled.
+    Text 
+      The list $Di = \{d_1,\dots ,d_n \}$ represents the format of the game. 
+      This example creates a random game of format $2 \times 2$.
       
-    Example  
-     FF = ZZ/32003;
-     d = {2,2,2};
-     X = randomGame(d, CoefficientRing => FF);
-     PR = probabilityRing(d, CoefficientRing => FF);
-     V = spohnIdeal(PR, X);
-     G1 = graph {{John,Matthew},{Matthew,Sarah}};
-     G2 = graph {{a,b},{b,c},{c,a}};
-     I1 = intersectWithCImodel(V, G1, {John,Matthew,Sarah})
-     I2 = intersectWithCImodel(V, G2, {a,b,c}) 
-      
-    Text
-      Here is an example where the conditional independence relations are given with a List.
-
     Example
-      FF = ZZ/32003;
-      d = {2,2,2};
-      X = randomGame(d, CoefficientRing => FF);
-      PR = probabilityRing(d, CoefficientRing => FF);
-      V = spohnIdeal(PR, X);
-      G = graph ({{1,2}},Singletons => {3});
-      L = {{{1,2},{3},{}}};
-      I1 = intersectWithCImodel(V, G)
-      I2 = intersectWithCImodel(V, L)
-      I1 == I2
+      X = randomGame({2,2})
+      peek X#1
+      peek X#2
 
     Text
-      The Verbose=>true option prints the progress of each step in the saturation process -
-      a message is printed after saturating the ideal $V$, the conditional independence ideal $I$,
-      and the sum $V + I$ with respect to each hyperplane of the probablity simplex.
+      The optional argument CoefficientRing allows to change the ring of payoffs. 
+      If no coefficient choice is specified, the payoffs will be rational numbers.
+      This example creates a random game of format $2 \times 2$ with integer coefficients.
+
     Example
-      FF = ZZ/32003;
-      d = {2,3,2};
-      X = randomGame(d, CoefficientRing => FF);
-      PR = probabilityRing(d, CoefficientRing => FF);
-      V = spohnIdeal(PR, X);
-      L = {{{1,2},{3},{}}};
-      I = intersectWithCImodel(V, L, Verbose=>true);
- 
+      X = randomGame({2,2}, CoefficientRing => ZZ)
+      peek X#1
+      peek X#2
+
+    Text
+     Outputs of this function can be used as input for the functions spohnMatrices, spohnIdeal and konstanzMatrix. --ADD MORE???
+
   SeeAlso
-    conditionalIndependenceIdeal 
-    mapToProbabilityRing
-    toMarkovRing
-    ciIdeal
-    globalMarkov
+    spohnMatrices
+    spohnIdeal
+    konstanzMatrix
+    --ADD MORE?
+    
 ///
 
---------------------------------------------
--- Documentation spohnCI
---------------------------------------------
+---------------------------------
+-- Documentation spohnMatrices --
+---------------------------------
 
 doc ///
   Key
-    spohnCI
-    (spohnCI, Ring, List, Graph)
-    (spohnCI, Ring, List, Graph, List)
-    (spohnCI, Ring, List, List)
-    (spohnCI, Ring, List, List, List) 
+    spohnMatrices
+    
   Headline
-    The ideal of the Spohn conditional independence (CI) variety
+    compute the list of Spohn matrices of a given game
   Usage
-    spohnCI(PR, X, G)
-    spohnCI(PR, X, G, PlayerNames)
-    spohnCI(PR, X, Stmts)
-    spohnCI(PR, X, Stmts, PlayerNames)
+    spohnMatrices(PR,X)
+  Inputs
+     PR:Ring 
+      a probability ring obtained via probabilityRing(Di), where $Di = \{ d_1, \ldots, d_n \}$ is the format of the game
+     X:List 
+      a list of n tensors of format $d_1 \times \ldots \times d_n$ specifying the payoffs of the game
+  Outputs
+    :List  
+      the list of Spohn matrices $(M_1, \ldots , M_n)$ describing the dependency equilibria of the game $X$
+  Description
+    Text 
+      The list $Di = \{d_1,\dots ,d_n \}$ represents the format of the game. It is crucial that the formats in PR and X match up.
+      For $i=1,\ldots, n$ the Spohn matrix $M_i$ is the $d_i \times 2$ matrix describing the expected payoff of the $i$-th player.
+      The Spohn matrices $M_1,\ldots , M_n$ have rank one at the dependency equilibria of the game $X$.
+      
+    Example
+      Di = {2,2,3};
+      PR = probabilityRing(Di);
+      X = randomGame(Di);
+
+      I = spohnMatrices(PR,X)
+
+  SeeAlso
+    probabilityRing
+    randomGame
+    spohnIdeal
+    konstanzMatrix
+    
+///
+
+------------------------------
+-- Documentation spohnIdeal --
+------------------------------
+
+doc ///
+  Key
+    spohnIdeal
+    
+  Headline
+    compute the ideal of the Spohn variety of a given game
+  Usage
+    spohnIdeal(PR,X)
+  Inputs
+     PR:Ring 
+      a probability ring obtained via probabilityRing(Di), where $Di = \{ d_1, \ldots, d-n \}$ is the format of the game
+     X:List 
+      a list of n tensors of format $d_1 \times \ldots \times d_n$ specifying the payoffs of the game
+  Outputs
+    :List  
+      the ideal generated by the $2\times 2$ minors of the Spohn matrices of the game $X$
+  Description
+    Text 
+      The list $Di = \{d_1,\dots ,d_n \}$ represents the format of the game. It is crucial that the formats in PR and X match up.
+      The Spohn ideal $I_X$ is the ideal defining the Spohn variety of a game $X$, which contains the dependency equilibria of the game $X$. Its generators are given by the $2\times 2$ minors of the Spohn matrices.
+      This function uses the function spohnMatrices to compute the Spohn matrices of the given game.
+      
+    Example
+      Di = {2,2,3};
+      PR = probabilityRing(Di);
+      X = randomGame(Di);
+
+      I = spohnIdeal(PR,X)
+
+  SeeAlso
+    probabilityRing
+    randomGame
+    spohnMatrices
+    konstanzMatrix
+///
+
+----------------------------------
+-- Documentation konstanzMatrix --
+----------------------------------
+
+doc ///
+  Key
+    konstanzMatrix
+    
+  Headline
+    constructs the Konstanz matrix of a given game
+  Usage
+    konstanzMatrix(PR, X)
   Inputs
     PR:Ring 
-      The probability ring (must be created with {\tt probabilityRing})
+      a probability ring obtained via probabilityRing(Di), where $Di = \{ d_1, \ldots, d-n \}$ is the format of the game
     X:List 
-      The game tensor
-    G:Graph
-      The graph specifying the conditional independence conditions
-    Stmts:List
-      A list of lists {L1,L2,L3} corresponding to the relation "L1 and L2 are conditionally independent given L3".    
-    PlayerNames:List
-      the ordered list of players - the names of the random variables in the conditional independence
-      statements or vertices of the graph. If PlayerNames is omitted, the players
-      (or the vertices of G) are assumed to be labelled 1..n.
+      a list of n tensors of format $d_1 \times \ldots \times d_n$ specifying the payoffs of the game
+  --Optional inputs
+  --  KonstanzVariableName => ..., default value k, optional input to choose another variable name
   Outputs
-    :Ideal 
-       The ideal of the Spohn CI variety
+    :Matrix  
+      the $(d_1 + \ldots + d_n) \times (d-1 \cdots d_n)$-dimensional Konstanz matrix 
   Description
-    Text
-      {\tt spohnCI} computes the ideal of the Spohn conditional independence variety for a game $X$ and
-      conditional independence model determined by an undirected graph $G$ or set of conditional
-      independence statements $Stmts$.
+    Text 
+      The list $Di = \{d_1,\dots ,d_n \}$ represents the format of the game. It is crucial that the formats in PR and X match up.
+      The Konstanz matrix $K_X(k)$ is the unique matrix with monic polynomials as entries such that the Spohn variety is the union $\bigcup_{k \in (\mathbb P^1)^n} \ker K_X(k)$.
       
     Example
-      FF = ZZ/32003
-      d = {2,2,2};
-      X = randomGame(d, CoefficientRing => FF);
-      PR = probabilityRing(d, CoefficientRing => FF);
-      G1 = graph ({}, Singletons => {1,2,3});
-      G2 = graph ({{1,2}}, Singletons => {3});
-      I1 = spohnCI(PR,X,G1)
-      I2 = spohnCI(PR,X,G2)
-      
+      Di = {2,2,3};
+      PR = probabilityRing(Di);
+      X = randomGame(Di);
+
+      K = konstanzMatrix(PR,X)
+
     Text
-      Here is an example where the vertices of the graph need to be relabeled.
-      
-    Example  
-      FF = ZZ/32003
-      d = {2,3,2};
-      X = randomGame(d, CoefficientRing => FF);
-      PR = probabilityRing(d, CoefficientRing => FF);
-      G1 = graph {{John,Matthew},{Matthew,Sarah}};
-      G2 = graph {{a,b},{b,c},{c,a}};
-      I1 = spohnCI(PR,X,G1, {John,Matthew,Sarah})
-      I2 = spohnCI(PR,X,G2, {a,b,c}) 
-      
-    Text
-      Here is an example where the conditional independence relations are given with a List.
+     Indeed, then we can obtain the Spohn variety from the Konstanz matrix as described above.
 
     Example
-      FF = ZZ/32003
-      d = {2,2,2};
-      X = randomGame(d, CoefficientRing => FF);
-      PR = probabilityRing(d, CoefficientRing => FF);
-      G = graph ({{1,2}},Singletons => {3});
-      L = {{{1,2},{3},{}}};
-      I1 = spohnCI(PR,X,G)
-      I2 = spohnCI(PR,X,L)
-      I1 == I2
- 
+      P = vector gens PR;
+      R = QQ[apply(enumerateTensorIndices Di, j -> p_j), apply(#Di, i -> k_i)];
+      I = substitute(eliminate({k_0,k_1,k_2},substitute(ideal entries(K*P), R)), PR);
+      I == spohnIdeal(PR,X)
+
+    Text
+      The optional argument KonstanzVariableName allows to change the name of the variables. 
+      If no variable name choice is specified, the variables will be named with k.
+      
+    Example
+      Di = {2,2};
+      PR = probabilityRing(Di);
+      X = randomGame(Di);
+
+      K = konstanzMatrix(PR,X, KonstanzVariableName => "z")
+
   SeeAlso
+    probabilityRing
+    randomGame
+    spohnMatrices
     spohnIdeal
-    ciIdeal
-    intersectWithCImodel
-    conditionalIndependenceIdeal
+   
 ///
+
 
 
 --******************************************--
@@ -1176,6 +989,74 @@ assert(class CE === Polyhedron)
 assert(#vertices CE > ------
 ///
 
+---------------------------
+--- TEST probabilityRing---
+---------------------------
+
+TEST ///
+Di = {2,2,2}
+R = probabilityRing(Di, CoefficientRing=>QQ, ProbabilityVariableName=>"q")
+Q = zeroTensor(Di)
+
+Q#{0,0,0}=q#{0,0,0}
+Q#{0,0,1}=q#{0,0,1}
+Q#{0,1,0}=q#{0,1,0}
+Q#{0,1,1}=q#{0,1,1}
+Q#{1,0,0}=q#{1,0,0}
+Q#{1,0,1}=q#{1,0,1}
+Q#{1,1,0}=q#{1,1,0}
+Q#{1,1,1}=q#{1,1,1}
+
+assert(all for j in enumerateTensorIndices Di list Q#j === q#j)
+///
+
+-----------------------
+--- TEST randomGame ---
+-----------------------
+
+TEST /// 
+ Di = {2,2,3}
+ X = randomGame(Di)
+ assert(#X == #Di and all(#Di, i -> format(X#i) == Di))
+/// 
+
+--------------------------
+--- TEST spohnMatrices ---
+--------------------------
+
+TEST /// 
+ Di = {2,2,3};
+ PR = probabilityRing(Di);
+ X = randomGame(Di);
+ M = spohnMatrices(PR,X)
+/// 
+
+-----------------------
+--- TEST spohnIdeal ---
+-----------------------
+
+TEST /// 
+ Di = {2,2,3};
+ PR = probabilityRing(Di);
+ X = randomGame(Di);
+ I = spohnIdeal(PR,X)
+ assert(I == sum(spohnMatrices(PR,X), m -> minors(2, m)) )
+/// 
+
+---------------------------
+--- TEST konstanzMatrix ---
+---------------------------
+
+TEST /// 
+ Di = {2,2,3};
+ PR = probabilityRing(Di);
+ X = randomGame(Di);
+ K = konstanzMatrix(PR,X);
+ P = vector gens PR;
+ R = QQ[apply(enumerateTensorIndices Di, j -> p_j), apply(#Di, i -> k_i)];
+ I = substitute(eliminate({k_0,k_1,k_2},substitute(ideal entries(K*P), R)), PR);
+ assert(I == spohnIdeal(PR,X))
+/// 
 
 
 --------------------------------------
